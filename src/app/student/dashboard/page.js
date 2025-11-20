@@ -1,136 +1,113 @@
-import Link from 'next/link';
-import { QrCode, Calendar, UserCheck, TrendingUp, Clock } from 'lucide-react';
-import { getSession } from '@/lib/auth';
-import dbConnect from '@/lib/db';
-import AttendanceRecord from '@/models/AttendanceRecord';
-import ClassSession from '@/models/ClassSession';
-import Stats from '@/components/ui/Stats';
-import Card from '@/components/ui/Card';
+'use client';
+
+import { Calendar, QrCode, BarChart3, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import EmptyState from '@/components/composite/EmptyState';
+import Card from '@/components/ui/Card';
 
-export const dynamic = 'force-dynamic';
+export default function StudentDashboard() {
 
-async function getStudentStats(studentId) {
-    await dbConnect();
-    const totalPresent = await AttendanceRecord.countDocuments({
-        studentId,
-        status: 'PRESENT'
-    });
-    
-    const totalSessions = await AttendanceRecord.countDocuments({
-        studentId
-    });
-    
-    const attendanceRate = totalSessions > 0 ? Math.round((totalPresent / totalSessions) * 100) : 0;
-    
-    return { totalPresent, totalSessions, attendanceRate };
-}
+  // TODO: Replace mock with real server data (API fetch or DB query)
+  const user = {
+    name: "Student Name",
+    roll: "23CS001",
+    attendanceRate: "92%",
+    totalSessions: 128,
+    present: 118,
+    flagged: 2
+  };
 
-async function getUpcomingSessions(studentId) {
-    await dbConnect();
-    // Get student's batch to find relevant sessions
-    // For now, return empty array - would need to implement batch lookup
-    return [];
-}
+  const quickActions = [
+    {
+      title: 'Mark Attendance',
+      icon: <QrCode size={20} />,
+      link: '/student/mark',
+      variant: 'gradient'
+    },
+    {
+      title: 'Attendance History',
+      icon: <BarChart3 size={20} />,
+      link: '/student/history',
+      variant: 'outline'
+    }
+  ];
 
-export default async function StudentDashboard() {
-    const session = await getSession();
-    const statsData = await getStudentStats(session.user._id);
-    const upcomingSessions = await getUpcomingSessions(session.user._id);
+  return (
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-10 space-y-10 animate-fade">
 
-    const stats = [
-        {
-            label: 'Classes Attended',
-            value: statsData.totalPresent,
-            icon: <UserCheck size={24} />,
-            trend: 5
-        },
-        {
-            label: 'Total Sessions',
-            value: statsData.totalSessions,
-            icon: <Calendar size={24} />,
-        },
-        {
-            label: 'Attendance Rate',
-            value: statsData.attendanceRate,
-            suffix: '%',
-            icon: <TrendingUp size={24} />,
-            trend: statsData.attendanceRate >= 75 ? 2.5 : -2.5
-        },
-    ];
+      {/* Header */}
+      <section>
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+          Welcome, {user.name.split(' ')[0]} 👋
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Roll Number: {user.roll}
+        </p>
+      </section>
 
-    return (
-        <div className="p-6 lg:p-8 space-y-8">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Student Dashboard
-                    </h1>
-                    <p className="text-gray-600">
-                        Welcome back, <span className="text-purple-700 font-medium">{session.user.name}</span>
-                    </p>
-                </div>
-                <Link href="/student/mark">
-                    <Button variant="primary" size="lg" leftIcon={<QrCode size={20} />}>
-                        Mark Attendance
-                    </Button>
-                </Link>
-            </div>
+      {/* Statistics Row */}
+      <div className="grid gap-6 md:grid-cols-3">
 
-            {/* Stats Row */}
-            <Stats stats={stats} />
+        <Card padding="lg" className="text-center">
+          <p className="text-xs text-gray-500">Attendance Rate</p>
+          <p className="text-4xl font-semibold text-purple-600 dark:text-purple-400 mt-2">
+            {user.attendanceRate}
+          </p>
+        </Card>
 
-            {/* Content Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Quick Actions Card */}
-                <Link href="/student/mark" className="block">
-                    <Card hover={true} className="h-full p-8 flex flex-col items-center justify-center text-center group">
-                        <div className="w-20 h-20 bg-gradient-to-br from-purple-700 to-purple-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <QrCode size={40} className="text-white" />
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Mark Attendance</h2>
-                        <p className="text-gray-600 mb-6">Enter session code to mark your presence</p>
-                        <Button variant="outline" className="group-hover:bg-purple-50">
-                            Get Started
-                        </Button>
-                    </Card>
-                </Link>
+        <Card padding="lg" className="text-center">
+          <p className="text-xs text-gray-500">Present</p>
+          <p className="text-3xl font-semibold mt-2">{user.present}</p>
+          <p className="text-xs text-gray-500">{user.totalSessions} total</p>
+        </Card>
 
-                {/* Upcoming Sessions */}
-                <Card className="p-6 lg:col-span-2">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                            <Clock size={20} className="text-purple-700" /> Upcoming Sessions
-                        </h2>
-                    </div>
+        <Card padding="lg" className="text-center">
+          <p className="text-xs text-gray-500">Flags (Proxy/Suspicious)</p>
+          <p
+            className={`text-3xl font-semibold mt-2 ${
+              user.flagged > 0
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-emerald-600'
+            }`}
+          >
+            {user.flagged}
+          </p>
+        </Card>
 
-                    {upcomingSessions.length > 0 ? (
-                        <div className="space-y-4">
-                            {upcomingSessions.map((session) => (
-                                <Card key={session._id} variant="outlined" className="p-4">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900">{session.courseName}</h3>
-                                            <p className="text-sm text-gray-600 mt-1">{session.topic}</p>
-                                            <p className="text-xs text-gray-500 mt-2">
-                                                {new Date(session.scheduledAt).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <EmptyState
-                            icon={<Calendar size={48} />}
-                            title="No Upcoming Sessions"
-                            description="Your upcoming class sessions will appear here"
-                        />
-                    )}
-                </Card>
-            </div>
+      </div>
+
+      {/* Quick Actions */}
+      <Card padding="lg" className="space-y-5">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Calendar size={18} className="text-purple-500" /> Quick Actions
+        </h2>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {quickActions.map((action, i) => (
+            <a key={i} href={action.link}>
+              <Button
+                fullWidth
+                size="lg"
+                variant={action.variant}
+                className="gap-2"
+              >
+                {action.icon} {action.title}
+              </Button>
+            </a>
+          ))}
         </div>
-    );
+      </Card>
+
+      {/* Security Message */}
+      <Card padding="lg" className="space-y-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <ShieldCheck size={18} className="text-purple-500" /> Attendance Security
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          Your attendance is verified using your registered device and IP address.
+          Switching devices may trigger proxy detection warnings. To avoid being flagged,
+          always scan QR or mark attendance using the same registered device.
+        </p>
+      </Card>
+    </div>
+  );
 }
