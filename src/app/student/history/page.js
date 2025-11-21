@@ -4,6 +4,7 @@ import AttendanceRecord from '@/models/AttendanceRecord';
 import ClassSession from '@/models/ClassSession';
 import Course from '@/models/Course';
 import Card from '@/components/ui/Card';
+import { formatDate, formatTime } from '@/lib/dateUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ async function getHistory(studentId) {
       rec.sessionId?.subjectId?.name ||
       rec.sessionId?.subjectId?.code ||
       'Unknown Subject',
-    time: rec.markedAt ? rec.markedAt.toLocaleTimeString() : '',
+    time: rec.markedAt ? formatTime(rec.markedAt) : '',
   }));
 }
 
@@ -77,7 +78,7 @@ export default async function StudentHistoryPage() {
                 </div>
 
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {new Date(item.date).toLocaleDateString()} · {item.time}
+                  {formatDate(item.date)} · {item.time}
                 </p>
 
                 <p className="text-[11px] text-gray-500 mt-2">
@@ -116,7 +117,7 @@ export default async function StudentHistoryPage() {
                     className="hover:bg-gray-50 dark:hover:bg-[#151518] text-sm"
                   >
                     <td className="px-4 py-3">
-                      {new Date(item.date).toLocaleDateString()}
+                      {formatDate(item.date)}
                     </td>
                     <td className="px-4 py-3">{item.subject}</td>
                     <td className="px-4 py-3">{item.time}</td>

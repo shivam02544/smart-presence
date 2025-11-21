@@ -35,7 +35,7 @@ export default function CRLayout({ children }) {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Fixed Navbar */}
-            <Navbar 
+            <Navbar
                 showNavLinks={false}
                 showUserMenu={true}
                 user={{ name: 'CR User', email: 'cr@example.com' }}
@@ -43,7 +43,7 @@ export default function CRLayout({ children }) {
             />
 
             {/* Sidebar */}
-            <Sidebar 
+            <Sidebar
                 navItems={navItems}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
@@ -51,7 +51,7 @@ export default function CRLayout({ children }) {
             />
 
             {/* Main Content */}
-            <main className="md:ml-60 pt-[60px] min-h-screen">
+            <main className="md:ml-72 pt-[60px] min-h-screen">
                 <div className="min-h-full">
                     {children}
                 </div>

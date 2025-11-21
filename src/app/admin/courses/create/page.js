@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 
 export default function CreateCoursePage() {
     const router = useRouter();
@@ -20,7 +21,7 @@ export default function CreateCoursePage() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/courses', {
+            const res = await fetch(apiUrl('/api/courses'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
@@ -40,11 +41,11 @@ export default function CreateCoursePage() {
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-2xl mx-auto animate-fade-in">
             <div className="mb-6 md:mb-8">
-                <Link 
-                    href="/admin/courses" 
+                <Link
+                    href="/admin/courses"
                     className="inline-flex items-center gap-2 text-gray-400 hover:text-purple-400 mb-4 transition-colors group"
                 >
-                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                     <span>Back to Courses</span>
                 </Link>
                 <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">

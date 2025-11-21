@@ -1,10 +1,10 @@
 'use client';
 
 import InstallButton from "@/components/ui/InstallButton";
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ');
@@ -14,7 +14,7 @@ export default function Sidebar({ navItems, isOpen, onClose, portalName = 'Dashb
     const pathname = usePathname();
 
     const renderNavItems = () => (
-        <nav className="mt-6 space-y-1">
+        <nav className="mt-6 space-y-1.5">
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname.startsWith(item.href);
@@ -24,23 +24,33 @@ export default function Sidebar({ navItems, isOpen, onClose, portalName = 'Dashb
                         key={item.href}
                         href={item.href}
                         className={classNames(
-                            'group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                            'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                             active
-                                ? 'bg-gray-900 text-white dark:bg-white dark:text-black shadow-sm'
-                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200'
                         )}
                     >
-                        {Icon && (
-                            <Icon
-                                size={18}
-                                className={classNames(
-                                    active
-                                        ? 'text-white dark:text-black'
-                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100'
-                                )}
+                        {active && (
+                            <motion.div
+                                layoutId="active-nav-item"
+                                className="absolute inset-0 bg-gray-900 dark:bg-white rounded-xl"
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             />
                         )}
-                        <span>{item.label}</span>
+
+                        <span className="relative z-10 flex items-center gap-3">
+                            {Icon && (
+                                <Icon
+                                    size={18}
+                                    className={classNames(
+                                        active
+                                            ? 'text-white dark:text-black'
+                                            : 'text-gray-500 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-gray-300'
+                                    )}
+                                />
+                            )}
+                            <span className={active ? 'text-white dark:text-black' : ''}>{item.label}</span>
+                        </span>
                     </Link>
                 );
             })}
@@ -52,21 +62,21 @@ export default function Sidebar({ navItems, isOpen, onClose, portalName = 'Dashb
         <>
             <aside
                 className={classNames(
-                    'hidden md:flex fixed inset-y-0 left-0 w-64 flex-col border-r border-gray-200 dark:border-gray-800',
-                    'bg-white/90 dark:bg-[#050816]/95 backdrop-blur-md z-30'
+                    'hidden md:flex fixed inset-y-0 left-0 w-72 flex-col border-r border-gray-200 dark:border-gray-800',
+                    'bg-white/80 dark:bg-[#050816]/80 backdrop-blur-xl z-30'
                 )}
             >
                 {/* Logo & Portal */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
-                    <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg">
-                            <span className="text-xs font-bold text-white">SP</span>
+                <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100 dark:border-gray-800/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <Sparkles className="text-white" size={20} />
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-[0.16em] text-gray-400">
+                            <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
                                 SmartPresence
                             </p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <p className="text-base font-bold text-gray-900 dark:text-white">
                                 {portalName}
                             </p>
                         </div>
@@ -74,16 +84,15 @@ export default function Sidebar({ navItems, isOpen, onClose, portalName = 'Dashb
                 </div>
 
                 {/* Nav */}
-                <div className="flex-1 overflow-y-auto px-3 py-4">
+                <div className="flex-1 overflow-y-auto px-4 py-6">
                     {renderNavItems()}
                 </div>
 
-                {/* Footer placeholder (could be version, small text, etc.) */}
-                {/* Install Button */}
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+                {/* Footer */}
+                <div className="px-6 py-6 border-t border-gray-100 dark:border-gray-800/50">
                     <InstallButton fullWidth variant="outline" />
 
-                    <p className="mt-3 text-[11px] text-gray-400 text-center">
+                    <p className="mt-4 text-[11px] text-gray-400 text-center font-medium">
                         v1.0 · Attendance reinvented
                     </p>
                 </div>
@@ -91,58 +100,66 @@ export default function Sidebar({ navItems, isOpen, onClose, portalName = 'Dashb
             </aside>
 
             {/* Mobile sidebar (drawer) */}
-            {isOpen && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
-                        onClick={onClose}
-                    />
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                            onClick={onClose}
+                        />
 
-                    {/* Drawer */}
-                    <aside
-                        className={classNames(
-                            'fixed inset-y-0 left-0 w-64 flex flex-col border-r border-gray-200 dark:border-gray-800',
-                            'bg-white dark:bg-[#050816] z-50 transform transition-transform duration-200',
-                            isOpen ? 'translate-x-0' : '-translate-x-full'
-                        )}
-                    >
-                        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg">
-                                    <span className="text-xs font-bold text-white">SP</span>
+                        {/* Drawer */}
+                        <motion.aside
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className={classNames(
+                                'fixed inset-y-0 left-0 w-72 flex flex-col border-r border-gray-200 dark:border-gray-800',
+                                'bg-white dark:bg-[#050816] z-50'
+                            )}
+                        >
+                            <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100 dark:border-gray-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                                        <Sparkles className="text-white" size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                                            SmartPresence
+                                        </p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                                            {portalName}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-[11px] uppercase tracking-[0.16em] text-gray-400">
-                                        SmartPresence
-                                    </p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {portalName}
-                                    </p>
-                                </div>
+
+                                <button
+                                    onClick={onClose}
+                                    className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <X size={20} className="text-gray-500" />
+                                </button>
                             </div>
 
-                            <button
-                                onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <X size={18} className="text-gray-500" />
-                            </button>
-                        </div>
+                            <div className="flex-1 overflow-y-auto px-4 py-6">
+                                {renderNavItems()}
+                            </div>
+                            <div className="px-6 py-6 border-t border-gray-100 dark:border-gray-800">
+                                <InstallButton fullWidth variant="outline" />
+                                <p className="mt-4 text-[11px] text-gray-400 text-center font-medium">
+                                    v1.0 · Attendance reinvented
+                                </p>
+                            </div>
 
-                        <div className="flex-1 overflow-y-auto px-3 py-4">
-                            {renderNavItems()}
-                        </div>
-                        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
-                            <InstallButton fullWidth variant="outline" />
-                            <p className="mt-3 text-[11px] text-gray-400 text-center">
-                                v1.0 · Attendance reinvented
-                            </p>
-                        </div>
-
-                    </aside>
-                </>
-            )}
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
         </>
     );
 }

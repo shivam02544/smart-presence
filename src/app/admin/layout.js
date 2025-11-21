@@ -14,6 +14,7 @@ export default function AdminLayout({ children }) {
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/users', icon: Users, label: 'Users' },
     { href: '/admin/courses', icon: BookOpen, label: 'Courses' },
+    { href: '/admin/batches', icon: Users, label: 'Batches' },
   ];
 
   return (
@@ -27,7 +28,7 @@ export default function AdminLayout({ children }) {
       />
 
       {/* Main area (shifted right on desktop) */}
-      <div className="md:pl-64 flex flex-col min-h-screen">
+      <div className="md:pl-72 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-3">

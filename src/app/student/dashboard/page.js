@@ -1,20 +1,43 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Calendar, QrCode, BarChart3, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import LoadingSpinner from '@/components/composite/LoadingSpinner';
+import { apiUrl } from '@/lib/api';
 
 export default function StudentDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({
+    name: "Loading...",
+    roll: "N/A",
+    attendanceRate: "0%",
+    totalSessions: 0,
+    present: 0,
+    flagged: 0
+  });
 
-  // TODO: Replace mock with real server data (API fetch or DB query)
-  const user = {
-    name: "Student Name",
-    roll: "23CS001",
-    attendanceRate: "92%",
-    totalSessions: 128,
-    present: 118,
-    flagged: 2
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(apiUrl('/api/students/stats'));
+        const data = await res.json();
+
+        if (data.success) {
+          setUser(data.data);
+        } else {
+          console.error('Failed to fetch stats:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const quickActions = [
     {
@@ -30,6 +53,14 @@ export default function StudentDashboard() {
       variant: 'outline'
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-10 flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-10 space-y-10 animate-fade">
@@ -63,11 +94,10 @@ export default function StudentDashboard() {
         <Card padding="lg" className="text-center">
           <p className="text-xs text-gray-500">Flags (Proxy/Suspicious)</p>
           <p
-            className={`text-3xl font-semibold mt-2 ${
-              user.flagged > 0
+            className={`text-3xl font-semibold mt-2 ${user.flagged > 0
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-emerald-600'
-            }`}
+              }`}
           >
             {user.flagged}
           </p>

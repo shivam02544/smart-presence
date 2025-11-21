@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/api';
 
 export default function CreateUserPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [role, setRole] = useState('STUDENT');
+    const [batches, setBatches] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -19,14 +21,30 @@ export default function CreateUserPage() {
         employeeId: '',
     });
 
+    useEffect(() => {
+        const fetchBatches = async () => {
+            try {
+                const res = await fetch(apiUrl('/api/batches'));
+                const data = await res.json();
+                if (data.success) {
+                    setBatches(data.batches);
+                }
+            } catch (error) {
+                console.error('Failed to fetch batches:', error);
+            }
+        };
+        fetchBatches();
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const res = await fetch('/api/users', {
+            const res = await fetch(apiUrl('/api/users'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // Include cookies in the request
                 body: JSON.stringify({ ...formData, role }),
             });
 
@@ -45,11 +63,11 @@ export default function CreateUserPage() {
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto animate-fade-in">
             <div className="mb-6 md:mb-8">
-                <Link 
-                    href="/admin/users" 
+                <Link
+                    href="/admin/users"
                     className="inline-flex items-center gap-2 text-gray-400 hover:text-purple-400 mb-4 transition-colors group"
                 >
-                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                     <span>Back to Users</span>
                 </Link>
                 <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
@@ -72,11 +90,10 @@ export default function CreateUserPage() {
                                 key={r}
                                 type="button"
                                 onClick={() => setRole(r)}
-                                className={`py-3 px-4 text-sm font-semibold rounded-xl border-2 transition-all duration-200 ${
-                                    role === r
-                                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-lg shadow-purple-500/50 purple-glow'
-                                        : 'bg-black/60 border-purple-500/30 text-gray-300 hover:border-purple-500 hover:bg-purple-500/10'
-                                }`}
+                                className={`py-3 px-4 text-sm font-semibold rounded-xl border-2 transition-all duration-200 ${role === r
+                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-lg shadow-purple-500/50 purple-glow'
+                                    : 'bg-black/60 border-purple-500/30 text-gray-300 hover:border-purple-500 hover:bg-purple-500/10'
+                                    }`}
                             >
                                 {r}
                             </button>
@@ -162,16 +179,21 @@ export default function CreateUserPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-200 mb-2">
-                                    Batch ID
+                                    Batch
                                 </label>
-                                <input
+                                <select
                                     required
-                                    type="text"
-                                    placeholder="Enter Batch ID"
-                                    className="w-full px-4 py-3 rounded-xl border-2 border-purple-500/30 bg-black/40 backdrop-blur-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all duration-200 placeholder:text-gray-500 text-white"
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-purple-500/30 bg-black/40 backdrop-blur-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all duration-200 text-white"
                                     value={formData.batchId}
                                     onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
-                                />
+                                >
+                                    <option value="" disabled>Select Batch</option>
+                                    {batches.map((batch) => (
+                                        <option key={batch._id} value={batch._id} className="text-black">
+                                            {batch.name} - {batch.section} ({batch.department})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>

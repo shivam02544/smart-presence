@@ -25,7 +25,7 @@ export default function TeacherLayout({ children }) {
         portalName="Teacher Portal"
       />
 
-      <div className="md:pl-64 flex flex-col min-h-screen">
+      <div className="md:pl-72 flex flex-col min-h-screen">
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <button

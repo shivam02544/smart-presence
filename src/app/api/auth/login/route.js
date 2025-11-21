@@ -37,7 +37,7 @@ export async function POST(request) {
 
         // Create session
         const userData = {
-            _id: user._id,
+            _id: user._id.toString(), // Convert ObjectId to string
             name: user.name,
             email: user.email,
             role: user.role,

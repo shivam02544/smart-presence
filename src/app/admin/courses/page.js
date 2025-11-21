@@ -3,7 +3,8 @@ import dbConnect from "@/lib/db";
 import Course from "@/models/Course";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/composite/EmptyState";
-import Table from "@/components/composite/Table";
+import CoursesTable from "@/components/admin/CoursesTable";
+import Card from "@/components/ui/Card";
 import { BookOpen, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -41,37 +42,12 @@ async function getCourses({ search, dept, sort }) {
 }
 
 export default async function CoursesPage({ searchParams }) {
-  const search = searchParams?.search ?? "";
-  const dept = searchParams?.dept ?? "ALL";
-  const sort = searchParams?.sort ?? "newest";
+  const params = await searchParams;
+  const search = params?.search ?? "";
+  const dept = params?.dept ?? "ALL";
+  const sort = params?.sort ?? "newest";
 
   const courses = await getCourses({ search, dept, sort });
-
-  const columns = [
-    {
-      header: "Code",
-      accessor: "code",
-      render: (value) => <span className="font-mono font-semibold">{value}</span>,
-    },
-    {
-      header: "Course Name",
-      accessor: "name",
-      render: (value) => <span className="font-semibold">{value}</span>,
-    },
-    {
-      header: "Department",
-      accessor: "department",
-    },
-    {
-      header: "Semester",
-      accessor: "semester",
-    },
-    {
-      header: "Created",
-      accessor: "createdAt",
-      render: (value) => new Date(value).toLocaleDateString(),
-    },
-  ];
 
   const hasCourses = courses.length > 0;
 
@@ -151,7 +127,7 @@ export default async function CoursesPage({ searchParams }) {
       {/* Table or Empty */}
       {hasCourses ? (
         <Card padding="lg" className="overflow-hidden">
-          <Table data={courses} columns={columns} responsive="scroll" />
+          <CoursesTable courses={courses} />
         </Card>
       ) : (
         <Card padding="lg">

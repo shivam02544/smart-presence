@@ -27,10 +27,10 @@ export default function ToastProvider({ children }) {
   };
 
   const colors = {
-    success: "bg-emerald-600/30 border-emerald-400 text-emerald-300",
-    warning: "bg-amber-600/30 border-amber-400 text-amber-300",
-    error: "bg-red-600/30 border-red-400 text-red-300",
-    info: "bg-purple-600/30 border-purple-400 text-purple-300",
+    success: "bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-900/50 dark:border-emerald-500 dark:text-emerald-200",
+    warning: "bg-amber-100 border-amber-200 text-amber-800 dark:bg-amber-900/50 dark:border-amber-500 dark:text-amber-200",
+    error: "bg-red-100 border-red-200 text-red-800 dark:bg-red-900/50 dark:border-red-500 dark:text-red-200",
+    info: "bg-purple-100 border-purple-200 text-purple-800 dark:bg-purple-900/50 dark:border-purple-500 dark:text-purple-200",
   };
 
   return (

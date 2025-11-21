@@ -2,18 +2,19 @@ import dbConnect from '@/lib/db';
 import AttendanceRecord from '@/models/AttendanceRecord';
 import User from '@/models/User';
 import ClassSession from '@/models/ClassSession';
+import StudentProfile from '@/models/StudentProfile';
 
 export async function GET(req, { params }) {
   try {
     await dbConnect();
 
-    const { id: sessionId } = params;
+    const { id: sessionId } = await params;
 
     const records = await AttendanceRecord.find({ sessionId })
       .populate({
         path: 'studentId',
         model: User,
-        select: 'name rollNo email',
+        select: 'name email',
       })
       .populate({
         path: 'sessionId',
@@ -22,17 +23,32 @@ export async function GET(req, { params }) {
       .sort({ createdAt: -1 })
       .lean();
 
-    const formatted = records.map((rec) => ({
-      roll: rec.studentId?.rollNo || '-',
-      name: rec.studentId?.name || 'Unknown',
-      joinTime: rec.markedAt ? new Date(rec.markedAt).toLocaleTimeString() : '-',
-      leaveTime: rec.leaveTime ? new Date(rec.leaveTime).toLocaleTimeString() : null,
-      device: rec.deviceInfo || 'Unknown',
-      browser: rec.browser || 'Unknown',
-      ip: rec.ipAddress || 'Unknown',
-      flags: rec.flags || [],
-      status: rec.status || 'UNKNOWN',
-    }));
+    // Get student profiles for roll numbers
+    const studentIds = records.map(r => r.studentId?._id).filter(Boolean);
+    const profiles = await StudentProfile.find({ userId: { $in: studentIds } })
+      .lean();
+    const profileMap = new Map(profiles.map(p => [p.userId.toString(), p]));
+
+    const formatted = records.map((rec) => {
+      const profile = profileMap.get(rec.studentId?._id?.toString());
+      const userAgent = rec.meta?.userAgent || 'Unknown';
+      const browser = userAgent.includes('Chrome') ? 'Chrome' :
+        userAgent.includes('Firefox') ? 'Firefox' :
+          userAgent.includes('Safari') ? 'Safari' :
+            userAgent.includes('Edge') ? 'Edge' : 'Unknown';
+
+      return {
+        roll: profile?.rollNumber || rec.studentId?.email?.split('@')[0] || '-',
+        name: rec.studentId?.name || 'Unknown',
+        joinTime: rec.markedAt ? new Date(rec.markedAt).toLocaleTimeString() : '-',
+        leaveTime: rec.leaveTime ? new Date(rec.leaveTime).toLocaleTimeString() : null,
+        device: rec.deviceId ? `${rec.deviceId.slice(0, 8)}...` : 'Unknown',
+        browser: browser,
+        ip: rec.ipAddress || 'Unknown',
+        flags: rec.flags || [],
+        status: rec.status || 'PRESENT',
+      };
+    });
 
     return Response.json({ success: true, records: formatted });
   } catch (err) {

@@ -24,6 +24,10 @@ const StudentProfileSchema = new mongoose.Schema({
     phone: {
         type: String,
     },
+    enrollmentDate: {
+        type: Date,
+        default: Date.now,
+    },
     deviceIds: {
         type: [String], // Array of registered device IDs for anti-proxy
         default: [],

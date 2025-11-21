@@ -1,105 +1,115 @@
 /* ----------------------------------------------
    Global Styles — SmartPresence Design System V2
-   Inspired by Vercel + Stripe
+   Inspired by Vercel + Stripe + Modern Glassmorphism
 ---------------------------------------------- */
 
-/* Tailwind base imports */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 import */
+@import "tailwindcss";
 
 /* Smooth UI */
 :root {
-  --radius: 12px;
-  --brand: #7c3aed; /* Purple accent */
+  --radius: 16px;
+  --brand: #7c3aed;
+  /* Purple accent */
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Font smoothing */
+/* Font smoothing and base colors */
 body {
-  @apply antialiased text-gray-900 bg-gray-50 dark:bg-[#0D0D0E] dark:text-gray-200;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: rgb(17 24 39);
+  /* text-gray-900 */
+  background-color: rgb(249 250 251);
+  /* bg-gray-50 */
+}
+
+/* Dark mode base colors */
+.dark body {
+  color: rgb(229 231 235);
+  /* dark:text-gray-200 */
+  background-color: #0D0D0E;
+  /* dark:bg-[#0D0D0E] */
+}
+
+/* Interactive elements cursor */
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer;
 }
 
 /* Modern focus ring */
 *:focus-visible {
   outline: none;
-  @apply ring-2 ring-purple-500/60 ring-offset-2 ring-offset-transparent;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.5), 0 0 0 4px transparent;
 }
 
 /* Scrollbars (subtle) */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background-color: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 9999px;
 }
 
-/* Utility classes */
-.card {
-  @apply rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#111113] shadow-sm p-6;
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.8);
 }
 
-.card-hover {
-  @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.01];
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Typography helper scale */
-.h1 {
-  @apply text-4xl font-semibold tracking-tight;
-}
-.h2 {
-  @apply text-2xl font-semibold tracking-tight;
-}
-.h3 {
-  @apply text-lg font-medium;
+.dark .glass {
+  background: rgba(17, 17, 19, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Inputs */
-input {
-  @apply text-[15px];
+/* Animation Helpers */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
-/* Animation helpers */
-.animate-fade {
-  animation: fadeIn 0.35s ease forwards;
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
-@keyframes fadeScale {
-  0% { opacity: 0; transform: scale(0.88); }
-  50% { opacity: 0.7; transform: scale(1.02); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-scale {
-  animation: fadeScale 0.45s ease-out;
-}
-
-@keyframes softPulse {
-  0% { transform: scale(1); opacity: 0.18; }
-  50% { transform: scale(1.12); opacity: 0.08; }
-  100% { transform: scale(1); opacity: 0.18; }
-}
-
-.animate-soft-pulse {
-  animation: softPulse 1.4s ease-in-out infinite;
-}
-@keyframes entryFlash {
-  0% { background-color: rgba(16, 185, 129, 0.25); }
-  60% { background-color: rgba(16, 185, 129, 0.12); }
-  100% { background-color: transparent; }
-}
-
-.animate-entry {
-  animation: entryFlash 1.4s ease-out;
+.animate-pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

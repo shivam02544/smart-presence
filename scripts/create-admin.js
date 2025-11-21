@@ -87,34 +87,8 @@ async function createAdmin() {
     console.log('📧 Email:    admin@example.com');
     console.log('🔑 Password: admin123');
     console.log('═══════════════════════════════════════\n');
-    console.log('⚠️  IMPORTANT: Change this password after first login!\n');
-
-    // Create sample teacher
-    const teacherExists = await User.findOne({ email: 'teacher@example.com' });
-    if (!teacherExists) {
-      console.log('👨‍🏫 Creating sample teacher...');
-      await User.create({
-        name: 'Teacher Demo',
-        email: 'teacher@example.com',
-        password: hashedPassword,
-        role: 'TEACHER',
-      });
-      console.log('✅ Teacher created: teacher@example.com / admin123\n');
-    }
-
-    // Create sample student
-    const studentExists = await User.findOne({ email: 'student@example.com' });
-    if (!studentExists) {
-      console.log('👨‍🎓 Creating sample student...');
-      await User.create({
-        name: 'Student Demo',
-        email: 'student@example.com',
-        password: hashedPassword,
-        role: 'STUDENT',
-      });
-      console.log('✅ Student created: student@example.com / admin123\n');
-    }
-
+    console.log('⚠️  IMPORTANT: Change this password after first login!');
+    console.log('📝 Note: Only admins can create user accounts through the admin panel.\n');
     console.log('🎉 Setup complete! You can now login to the application.\n');
     
     await mongoose.connection.close();

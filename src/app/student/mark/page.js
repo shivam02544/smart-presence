@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { QrCode, Lock } from "lucide-react";
 import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
+import dynamic from 'next/dynamic';
+
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -62,17 +65,60 @@ export default function MarkAttendancePage() {
     return () => window.removeEventListener("online", syncOfflineEntries);
   }, []);
 
-  // Handle Attendance Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // Initialize QR Scanner only after deviceId is available
+  useEffect(() => {
+    if (!deviceId) return; // Wait for deviceId to be set
 
-    const payload = { sessionCode, deviceId, time: Date.now() };
+    let scanner = null;
 
     try {
-      // 🚨 If offline → store locally, notify + stop network request
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        /* verbose= */ false
+      );
+
+      scanner.render(
+        (decodedText) => {
+          handleScan(decodedText);
+          scanner?.clear().catch(() => { }); // Safely clear
+        },
+        (error) => {
+          // Ignore scanning errors
+        }
+      );
+    } catch (error) {
+      console.error("Failed to initialize scanner:", error);
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(() => { }); // Safely clear on unmount
+      }
+    };
+  }, [deviceId]); // Only initialize when deviceId is available
+
+  const handleScan = (decodedText) => {
+    if (decodedText) {
+      handleAttendanceSubmit({ preventDefault: () => { } }, decodedText);
+    }
+  };
+
+  const handleAttendanceSubmit = async (e, directPayload = null) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+
+    let payloadData = {};
+
+    if (directPayload) {
+      payloadData = { qrPayload: directPayload, deviceId, time: Date.now() };
+    } else {
+      payloadData = { sessionCode, deviceId, time: Date.now() };
+    }
+
+    try {
       if (!navigator.onLine) {
-        await saveOfflineAttendance(payload);
+        await saveOfflineAttendance(payloadData);
         showToast(
           "⚠ You are offline — attendance stored and will sync when you're back online.",
           "warning"
@@ -81,23 +127,26 @@ export default function MarkAttendancePage() {
         return;
       }
 
-      // Send live update to teacher UI
-      const socket = io("http://localhost:3001");
-      socket.emit("attendanceMarked", payload);
+      // const socket = io();
+      // socket.emit("markAttendance", { ...payloadData, sessionId: "unknown" });
 
-      // Send to backend
       const res = await fetch("/api/attendance/mark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadData),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
+      // Emit socket event with returned record
+      if (data.record) {
+        const socket = io();
+        socket.emit("markAttendance", data.record);
+      }
+
       showToast("✔ Attendance marked successfully!", "success");
 
-      // Redirect after confirmation
       setTimeout(() => router.push("/student/dashboard"), 1800);
 
     } catch (err) {
@@ -119,17 +168,16 @@ export default function MarkAttendancePage() {
       </header>
 
       {/* Scanner placeholder */}
-      <div className="rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-[#111113] shadow-md p-8">
-        <div className="w-full aspect-[1/1] rounded-xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-          <QrCode size={90} className="text-gray-600 dark:text-gray-300" />
-        </div>
+      {/* Scanner */}
+      <div className="rounded-2xl border border-gray-300 dark:border-gray-800 bg-white dark:bg-[#111113] shadow-md p-4 overflow-hidden">
+        <div id="reader" className="w-full rounded-xl overflow-hidden"></div>
         <p className="text-xs text-center text-gray-500 mt-3">
-          QR scanning coming soon — enter code below for now.
+          Point camera at the teacher's QR code
         </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleAttendanceSubmit} className="space-y-5">
         <Input
           label="Session Code"
           placeholder="Enter session code"

@@ -1,130 +1,104 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Calendar, Clock, Users } from 'lucide-react';
-import dbConnect from '@/lib/db';
-import ClassSession from '@/models/ClassSession';
-import { getSession } from '@/lib/auth';
+import { Plus, Calendar, Clock, Users, BookOpen, ArrowRight } from 'lucide-react';
 import Stats from '@/components/ui/Stats';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Table from '@/components/composite/Table';
 import EmptyState from '@/components/composite/EmptyState';
+import SessionsTable from '@/components/teacher/SessionsTable';
+import LoadingSpinner from '@/components/composite/LoadingSpinner';
+import { apiUrl } from '@/lib/api';
+import { motion } from 'framer-motion';
 
-export const dynamic = 'force-dynamic';
+export default function TeacherDashboard() {
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState({ name: '' });
+    const [sessions, setSessions] = useState([]);
+    const [stats, setStats] = useState([
+        { label: "Today's Classes", value: '0', icon: <Calendar size={24} />, trend: 0 },
+        { label: 'Total Students', value: '0', icon: <Users size={24} />, trend: 0 },
+        { label: 'Avg Duration', value: '0', suffix: 'm', icon: <Clock size={24} />, trend: 0 },
+    ]);
 
-async function getTeacherSessions(teacherId) {
-    await dbConnect();
-    return await ClassSession.find({ teacherId })
-        .sort({ createdAt: -1 })
-        .populate('subjectId', 'name code')
-        .populate('batchId', 'name section')
-        .limit(10);
-}
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-export default async function TeacherDashboard() {
-    const session = await getSession();
-    const sessions = await getTeacherSessions(session.user._id);
+    const fetchData = async () => {
+        try {
+            // Fetch stats
+            const statsRes = await fetch(apiUrl('/api/teachers/stats'));
+            const statsData = await statsRes.json();
 
-    const stats = [
-        {
-            label: "Today's Classes",
-            value: 3,
-            icon: <Calendar size={24} />,
-            trend: 0
-        },
-        {
-            label: 'Total Students',
-            value: 156,
-            icon: <Users size={24} />,
-            trend: 12
-        },
-        {
-            label: 'Avg Duration',
-            value: 55,
-            suffix: 'm',
-            icon: <Clock size={24} />,
-            trend: -2
-        },
-    ];
+            if (statsData.success) {
+                setStats([
+                    {
+                        label: "Today's Classes",
+                        value: statsData.data.todaySessions.toString(),
+                        icon: <Calendar size={24} />,
+                        trend: 0
+                    },
+                    {
+                        label: 'Total Students',
+                        value: statsData.data.totalStudents.toString(),
+                        icon: <Users size={24} />,
+                        trend: 0
+                    },
+                    {
+                        label: 'Avg Duration',
+                        value: statsData.data.avgDuration.toString(),
+                        suffix: 'm',
+                        icon: <Clock size={24} />,
+                        trend: 0
+                    },
+                ]);
+            }
 
-    const columns = [
-        {
-            header: 'Subject',
-            accessor: 'subject',
-            render: (_, row) => (
-                <div>
-                    <div className="font-semibold text-gray-900">
-                        {row.subjectId?.name}
-                    </div>
-                    <div className="text-xs text-gray-500 md:hidden mt-1">
-                        {row.batchId?.name} - {row.batchId?.section}
-                    </div>
-                </div>
-            )
-        },
-        {
-            header: 'Batch',
-            accessor: 'batch',
-            render: (_, row) => (
-                <span className="text-gray-700">
-                    {row.batchId?.name} - {row.batchId?.section}
-                </span>
-            )
-        },
-        {
-            header: 'Date',
-            accessor: 'date',
-            render: (_, row) => (
-                <div>
-                    <div className="text-sm text-gray-900">
-                        {new Date(row.startTime).toLocaleDateString()}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                        {new Date(row.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                </div>
-            )
-        },
-        {
-            header: 'Status',
-            accessor: 'status',
-            render: (_, row) => (
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                    ${row.status === 'ACTIVE'
-                        ? 'bg-success-50 text-success-600'
-                        : 'bg-gray-100 text-gray-600'}`}>
-                    {row.status}
-                </span>
-            )
-        },
-        {
-            header: 'Action',
-            accessor: 'action',
-            render: (_, row) => (
-                <div className="text-right">
-                    <Link href={`/teacher/session/${row._id}`}>
-                        <Button variant="ghost" size="sm">
-                            View
-                        </Button>
-                    </Link>
-                </div>
-            )
+            // Fetch recent sessions
+            const sessionsRes = await fetch(apiUrl('/api/teachers/sessions'));
+            const sessionsData = await sessionsRes.json();
+
+            if (sessionsData.success) {
+                setSessions(sessionsData.data.sessions || []);
+                setUser({ name: sessionsData.data.userName || 'Teacher' });
+            }
+
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[80vh]">
+                <LoadingSpinner />
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6 lg:p-8 space-y-8">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8"
+        >
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                         Teacher Dashboard
                     </h1>
-                    <p className="text-gray-600">
-                        Welcome back, <span className="text-purple-700 font-medium">{session.user.name}</span>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        Welcome back, <span className="text-purple-600 dark:text-purple-400 font-semibold">{user.name}</span>
                     </p>
                 </div>
                 <Link href="/teacher/session/create">
-                    <Button variant="primary" size="large" leftIcon={<Plus size={20} />}>
+                    <Button variant="gradient" size="md" leftIcon={<Plus size={20} />} className="shadow-lg shadow-purple-500/20">
                         Start New Session
                     </Button>
                 </Link>
@@ -134,17 +108,28 @@ export default async function TeacherDashboard() {
             <Stats stats={stats} />
 
             {/* Recent Sessions */}
-            <Card>
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-900">
-                        Recent Sessions
-                    </h2>
+            <Card variant="glass" padding="lg" className="min-h-[400px]">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            Recent Sessions
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Your latest teaching activity
+                        </p>
+                    </div>
+                    <Link href="/teacher/reports">
+                        <Button variant="ghost" size="sm" rightIcon={<ArrowRight size={16} />}>
+                            View All
+                        </Button>
+                    </Link>
                 </div>
+
                 {sessions.length > 0 ? (
-                    <Table columns={columns} data={sessions} />
+                    <SessionsTable sessions={sessions} />
                 ) : (
                     <EmptyState
-                        icon={<Calendar size={64} />}
+                        icon={<BookOpen size={48} className="text-purple-200 dark:text-purple-900/50" />}
                         title="No sessions found"
                         description="Start your first session to begin tracking attendance"
                         actionLabel="Start New Session"
@@ -152,6 +137,6 @@ export default async function TeacherDashboard() {
                     />
                 )}
             </Card>
-        </div>
+        </motion.div>
     );
 }

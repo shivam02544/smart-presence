@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import QRCode from "react-qr-code";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { io } from "socket.io-client";
 import * as XLSX from "xlsx";
-
-import { generateQRPayload } from "@/lib/qrEncrypt";
 
 import {
   Users,
@@ -20,8 +18,10 @@ import Card from "@/components/ui/Card";
 
 const PAGE_SIZE = 10;
 
+import { use } from "react";
+
 export default function TeacherSessionPage({ params }) {
-  const sessionId = params?.id;
+  const { id: sessionId } = use(params);
 
   const [viewMode, setViewMode] = useState("simple"); // simple | advanced
   const [qrValue, setQrValue] = useState("");
@@ -30,26 +30,66 @@ export default function TeacherSessionPage({ params }) {
   const [presentCount, setPresentCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [timeLeft, setTimeLeft] = useState(10 * 60);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleCloseSession = useCallback(async () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CLOSED' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Session closed successfully');
+      } else {
+        alert(data.error || 'Failed to close session');
+      }
+    } catch (err) {
+      console.error('Failed to close session:', err);
+      alert('Failed to close session');
+    } finally {
+      setIsClosing(false);
+    }
+  }, [sessionId, isClosing]);
+
+  // Auto-close when time expires
+  useEffect(() => {
+    if (timeLeft === 0) {
+      handleCloseSession();
+    }
+  }, [timeLeft, handleCloseSession]);
 
   // -----------------------------
   // 🔹 Generate rotating encrypted QR
   // -----------------------------
   useEffect(() => {
-    const updateQR = () => {
-      setQrValue(generateQRPayload(sessionId));
+    const updateQR = async () => {
+      try {
+        const res = await fetch(`/api/utils/qr?sessionId=${sessionId}`);
+        const data = await res.json();
+        if (data.payload) {
+          setQrValue(data.payload);
+        }
+      } catch (error) {
+        console.error("Failed to generate QR", error);
+      }
     };
 
-    updateQR();
-    const interval = setInterval(updateQR, 15000);
-
-    return () => clearInterval(interval);
+    if (sessionId) {
+      updateQR();
+      const interval = setInterval(updateQR, 15000);
+      return () => clearInterval(interval);
+    }
   }, [sessionId]);
 
   // -----------------------------
   // 🔹 Real-time WebSocket listener
   // -----------------------------
   useEffect(() => {
-    const socket = io("http://localhost:3001");
+    const socket = io(); // Connect to the same origin
 
     socket.emit("joinSession", sessionId);
 
@@ -82,6 +122,8 @@ export default function TeacherSessionPage({ params }) {
     };
 
     fetchRecords();
+    const interval = setInterval(fetchRecords, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, [sessionId]);
 
   // -----------------------------
@@ -179,8 +221,8 @@ export default function TeacherSessionPage({ params }) {
             <Card padding="lg" className="space-y-5 text-center">
               <p className="text-sm font-medium">Scan QR to Mark Attendance</p>
 
-              <div className="mx-auto w-48 h-48 p-2 rounded-xl bg-white dark:bg-black border">
-                {qrValue && <QRCode value={qrValue} size={180} />}
+              <div className="mx-auto w-48 h-48 p-2 rounded-xl bg-white dark:bg-black border flex items-center justify-center">
+                {qrValue && <QRCodeSVG value={qrValue} size={180} />}
               </div>
 
               <p className="text-xs text-gray-500">
@@ -210,8 +252,14 @@ export default function TeacherSessionPage({ params }) {
 
           {/* Actions */}
           <div className="flex flex-col gap-3 md:flex-row">
-            <Button variant="gradient" size="lg" className="flex-1">
-              Close Session
+            <Button
+              variant="gradient"
+              size="lg"
+              className="flex-1"
+              onClick={handleCloseSession}
+              disabled={isClosing}
+            >
+              {isClosing ? "Closing..." : "Close Session"}
             </Button>
 
             <Button
@@ -257,9 +305,8 @@ export default function TeacherSessionPage({ params }) {
                   {pagedRecords.map((row, i) => (
                     <tr
                       key={i}
-                      className={`hover:bg-gray-50 ${
-                        highlightRecordId === row.roll ? "animate-entry" : ""
-                      }`}
+                      className={`hover:bg-gray-50 ${highlightRecordId === row.roll ? "animate-entry" : ""
+                        }`}
                     >
                       <td className="px-4 py-3 font-medium">{row.roll}</td>
                       <td className="px-4 py-3">{row.name}</td>

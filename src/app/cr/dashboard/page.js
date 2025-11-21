@@ -2,15 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { Users, Calendar, BarChart3, Wifi, WifiOff, UploadCloud, CheckCircle, FileText, Settings } from 'lucide-react';
-import { saveOfflineAttendance, getOfflineRecords, clearSyncedRecords } from '@/lib/offline';
+import { getOfflineRecords, clearSyncedRecords } from '@/lib/offline';
 import Stats from '@/components/ui/Stats';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import LoadingSpinner from '@/components/composite/LoadingSpinner';
+import { apiUrl } from '@/lib/api';
 
 export default function CRDashboard() {
+    const [loading, setLoading] = useState(true);
     const [isOnline, setIsOnline] = useState(true);
     const [offlineCount, setOfflineCount] = useState(0);
     const [syncing, setSyncing] = useState(false);
+    const [stats, setStats] = useState([
+        { label: 'Class Students', value: '0', icon: <Users size={24} />, trend: 0 },
+        { label: 'Sessions This Week', value: '0', icon: <Calendar size={24} />, trend: 0 },
+        { label: 'Avg Attendance', value: '0', suffix: '%', icon: <BarChart3 size={24} />, trend: 0 },
+    ]);
 
     useEffect(() => {
         setIsOnline(navigator.onLine);
@@ -22,12 +30,48 @@ export default function CRDashboard() {
         window.addEventListener('offline', handleOffline);
 
         updateOfflineCount();
+        fetchStats();
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    const fetchStats = async () => {
+        try {
+            const res = await fetch(apiUrl('/api/cr/stats'));
+            const data = await res.json();
+
+            if (data.success) {
+                setStats([
+                    {
+                        label: 'Class Students',
+                        value: data.data.classStudents.toString(),
+                        icon: <Users size={24} />,
+                        trend: 0
+                    },
+                    {
+                        label: 'Sessions This Week',
+                        value: data.data.sessionsThisWeek.toString(),
+                        icon: <Calendar size={24} />,
+                        trend: 0
+                    },
+                    {
+                        label: 'Avg Attendance',
+                        value: data.data.avgAttendance.toString(),
+                        suffix: '%',
+                        icon: <BarChart3 size={24} />,
+                        trend: 0
+                    },
+                ]);
+            }
+        } catch (error) {
+            console.error('Error fetching CR stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const updateOfflineCount = async () => {
         const records = await getOfflineRecords();
@@ -52,46 +96,30 @@ export default function CRDashboard() {
         }
     };
 
-    // Class statistics for CR dashboard
-    const stats = [
-        {
-            label: 'Class Students',
-            value: 42,
-            icon: <Users size={24} />,
-            trend: 2
-        },
-        {
-            label: 'Sessions This Week',
-            value: 8,
-            icon: <Calendar size={24} />,
-            trend: 0
-        },
-        {
-            label: 'Avg Attendance',
-            value: 89,
-            suffix: '%',
-            icon: <BarChart3 size={24} />,
-            trend: 5.2
-        },
-    ];
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner />
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-gray-50 min-h-full p-4 md:p-6 lg:p-8">
+        <div className="bg-gray-50 dark:bg-gray-900 min-h-full p-4 md:p-6 lg:p-8">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                         CR Dashboard
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                         Manage your class attendance and records
                     </p>
                 </div>
-                <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-200 ${
-                    isOnline 
-                        ? 'bg-success-50 text-success-700 border border-success-200' 
-                        : 'bg-error-50 text-error-700 border border-error-200'
-                }`}>
+                <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all duration-200 ${isOnline
+                    ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
                     {isOnline ? <Wifi size={18} /> : <WifiOff size={18} />}
                     <span>{isOnline ? 'Online' : 'Offline Mode'}</span>
                 </div>
@@ -108,16 +136,16 @@ export default function CRDashboard() {
                 <Card padding="default">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                                <UploadCloud size={20} className="text-purple-700" />
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                                <UploadCloud size={20} className="text-purple-700 dark:text-purple-400" />
                                 Offline Records
                             </h2>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Records stored locally waiting to be synced
                             </p>
                         </div>
-                        <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
-                            <span className="text-xl font-bold text-purple-700">{offlineCount}</span>
+                        <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                            <span className="text-xl font-bold text-purple-700 dark:text-purple-400">{offlineCount}</span>
                         </div>
                     </div>
 
@@ -132,8 +160,8 @@ export default function CRDashboard() {
                     </Button>
 
                     {!isOnline && (
-                        <div className="mt-4 p-4 bg-warning-50 border border-warning-200 rounded-lg">
-                            <p className="text-sm text-warning-700">
+                        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <p className="text-sm text-yellow-700 dark:text-yellow-400">
                                 <strong>Offline Mode:</strong> You're currently offline. Records will sync automatically when connection is restored.
                             </p>
                         </div>
@@ -142,38 +170,38 @@ export default function CRDashboard() {
 
                 {/* Session Management Options Card */}
                 <Card padding="default">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Calendar size={20} className="text-purple-700" />
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Calendar size={20} className="text-purple-700 dark:text-purple-400" />
                         Session Management
                     </h2>
                     <div className="space-y-3">
-                        <Button 
-                            variant="outline" 
-                            fullWidth 
+                        <Button
+                            variant="outline"
+                            fullWidth
                             leftIcon={<CheckCircle size={18} />}
                             className="justify-start"
                         >
                             Manual Attendance Sheet
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            fullWidth 
+                        <Button
+                            variant="outline"
+                            fullWidth
                             leftIcon={<FileText size={18} />}
                             className="justify-start"
                         >
                             Generate Reports
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            fullWidth 
+                        <Button
+                            variant="outline"
+                            fullWidth
                             leftIcon={<Users size={18} />}
                             className="justify-start"
                         >
                             Manage Class List
                         </Button>
-                        <Button 
-                            variant="outline" 
-                            fullWidth 
+                        <Button
+                            variant="outline"
+                            fullWidth
                             leftIcon={<Settings size={18} />}
                             className="justify-start"
                         >
@@ -183,41 +211,12 @@ export default function CRDashboard() {
                 </Card>
             </div>
 
-            {/* Recent Activity Card */}
+            {/* Note about activity */}
             <div className="mt-6">
                 <Card padding="default">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <BarChart3 size={20} className="text-purple-700" />
-                        Recent Activity
-                    </h2>
-                    <div className="space-y-3">
-                        {[
-                            { action: 'Attendance synced', details: '15 records uploaded to server', time: '2h ago', icon: UploadCloud },
-                            { action: 'Manual attendance taken', details: 'Session CS101 - 38/42 students present', time: '4h ago', icon: CheckCircle },
-                            { action: 'Weekly report generated', details: 'Attendance summary for Week 12', time: '1d ago', icon: FileText },
-                            { action: 'Class list updated', details: '2 new students added to roster', time: '2d ago', icon: Users }
-                        ].map((activity, index) => {
-                            const Icon = activity.icon;
-                            return (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200 hover:bg-purple-50 hover:border-purple-200 transition-colors group"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 group-hover:scale-110 transition-transform">
-                                        <Icon size={18} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-900">
-                                            {activity.action}
-                                        </p>
-                                        <p className="text-xs text-gray-600 mt-0.5">
-                                            {activity.details}
-                                        </p>
-                                    </div>
-                                    <span className="text-xs text-gray-500">{activity.time}</span>
-                                </div>
-                            );
-                        })}
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <BarChart3 size={32} className="mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Recent activity will appear here</p>
                     </div>
                 </Card>
             </div>
