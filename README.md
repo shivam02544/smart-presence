@@ -193,27 +193,45 @@ The application will automatically create collections on first use. No manual da
 
 ### First Time Setup
 
-1. **Start the Application**
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Set Up Environment Variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` and add your MongoDB URI and JWT secret.
+
+3. **Start MongoDB**
+   
+   Make sure MongoDB is running (locally or use MongoDB Atlas).
+
+4. **Create Admin User** ⚠️ **CRITICAL STEP**
+   
+   Run the admin creation script:
+   ```bash
+   node scripts/create-admin.js
+   ```
+   
+   This will create an admin user with:
+   - **Email**: `admin@example.com`
+   - **Password**: `admin123`
+   - **Role**: `ADMIN`
+   
+   > 🔐 **Important**: Change the default password after first login!
+
+5. **Start the Application**
    ```bash
    npm run dev
    ```
 
-2. **Create Admin User**
-   
-   Use the API or create directly in MongoDB:
-   ```javascript
-   // Example admin user
-   {
-     name: "Admin User",
-     email: "admin@example.com",
-     password: "$2a$10$hashedpassword", // Use bcrypt to hash
-     role: "ADMIN"
-   }
-   ```
-
-3. **Login**
+6. **Login**
    - Navigate to `http://localhost:3000`
-   - Use your admin credentials to login
+   - Login with: `admin@example.com` / `admin123`
+   - Change your password immediately!
 
 ### For Administrators
 

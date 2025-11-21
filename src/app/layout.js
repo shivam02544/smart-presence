@@ -23,35 +23,25 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-
-      <body
-        className={`min-h-screen antialiased bg-gray-50 text-gray-900
-        dark:bg-[#0D0D0E] dark:text-gray-200 transition-colors duration-300`}
-      >
+      <body className={`min-h-screen antialiased bg-gray-50 text-gray-900
+        dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300`}>
         <ThemeProvider>
           {/* 🔥 Toast System Enabled Globally */}
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
         <script>
           {`if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/service-worker.js")
-      .then(() => console.log("✔ Service Worker Registered"))
-      .catch(err => console.error("SW Registration Failed", err));
-    }`}
+            navigator.serviceWorker.register("/service-worker.js")
+              .then(() => console.log("✔ Service Worker Registered"))
+              .catch(err => console.error("SW Registration Failed", err));
+          }`}
         </script>
-
       </body>
     </html>
   );

@@ -21,24 +21,6 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: rgb(17 24 39);
-  /* text-gray-900 */
-  background-color: rgb(249 250 251);
-  /* bg-gray-50 */
-}
-
-/* Dark mode base colors */
-.dark body {
-  color: rgb(229 231 235);
-  /* dark:text-gray-200 */
-  background-color: #0D0D0E;
-  /* dark:bg-[#0D0D0E] */
-}
-
-/* Interactive elements cursor */
-input[type="submit"],
-input[type="button"] {
-  cursor: pointer;
 }
 
 /* Modern focus ring */
